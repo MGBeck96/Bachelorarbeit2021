@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<!-- 
+  Code von Rui Santos übernommen und bearbeitet. Abrufbar auf https://randomnerdtutorials.com/esp8266-web-server-spiffs-nodemcu/
+  Letzter Zugriff 5.10.2021.
+-->
+<html>
+<head>
+  <title>Wetterstation mit ESP8266</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+  <h1>Wetterstation mit ESP8266</h1>
+  <p>
+    <span class="sensor-labels">Temperatur Au&szlig;en</span>
+    <span id="temperatur_aussen">%TEMPERATUR_AUSSEN%</span>
+    <sup class="units">&deg;C</sup>
+  </p>
+  <p>
+    <span class="sensor-labels">Temperatur Innen</span>
+    <span id="temperatur_innen">%TEMPERATUR_INNEN%</span>
+    <sup class="units">&deg;C</sup>
+  </p>
+  <p>
+    <span class="sensor-labels">Luftfeuchte Innen</span>
+    <span id="feuchte_innen">%FEUCHTE_INNEN%</span>
+    <sup class="units">&#37;</sup>
+  </p>
+  <p>
+    <span class="sensor-labels">Luftfeuchte Au&szlig;en</span>
+    <span id="feuchte_aussen">%FEUCHTE_AUSSEN%</span>
+    <sup class="units">&#37;</sup>
+  </p>
+  <p>
+    <span class="sensor-labels">Luftfeuchte</span>
+    <span id="druck">%DRUCK%</span>
+    <sup class="units">hPa</sup>
+  </p>
+</body>
+<!--
+Hier werden die XML-AJAX-Befehle definiert:
+AJAX kann Websites aktualiseren, ohne dass die Seite neu geladen werden muss.
+Die Kommunikation kann bidirektional sein, hier ist sie nur unidirektional.
+Dokumentation unter https://www.w3schools.com/xml/ajax_xmlhttprequest_response.asp und
+https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest. Zugriff 5.10.2021.
+Funktion der Anfrage:
+- setIntervall(..., Zeit in Millisekunden); -> gibt die Frequenz der Aktualiserungsanfrage vor.
+- function(){...} -> Definiert die Funktion, die in der angegeben Frequenz aufgerufen wird.
+- var xhttp = new XMLHttpRequest(); -> Erstellt einen neuen XML-Request "xhttp".
+- xhttp.onreadystatechange = function() {...}; -> Wenn der "Ready-State" des XML-Requests sich ändert führe Funktion auf.
+- if (this.readyState == 4 && this.status == 200) {...} -> Wenn "Ready-State" = 4, also fertig ist, und der HTML-Status = 200, dann mache {...}.
+- document.getElementById("id").innerHTML = this.responseText; -> Antwort an Stelle "id" in der HTML-Datei schreiben
+- xhttp.open("GET", "tag", true); -> Sende einen Request die Daten mit der "tag"-Bezeichnung zu erhalten. True, damit das asynchron passiert.
+Wird im Arduino-Sketch mit folgendem Befehl beantwortet:
+server.on("tag", HTTP_GET, [](AsyncWebServerRequest * request) {
+  request->send_P(200, "text/plain", "Wert"); -> "200" => HTML-Status. "Wert" => this.responseText.
+});
+- xhttp.send(); -> Sende den erstellten XML-Request.
+-->
+<script>
+  setInterval(function ( ) {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+        document.getElementById("temperatur_aussen").innerHTML = this.responseText;
+      }
+    };
+    xhttp.open("GET", "/temperatur_aussen", true);
+    xhttp.send();
+  }, 10000 ) ;
+
+  setInterval(function ( ) {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+        document.getElementById("temperatur_innen").innerHTML = this.responseText;
+      }
+    };
+    xhttp.open("GET", "/temperatur_innen", true);
+    xhttp.send();
+  }, 10000 ) ;
+
+  setInterval(function ( ) {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+        document.getElementById("feuchte_innen").innerHTML = this.responseText;
+      }
+    };
+    xhttp.open("GET", "/feuchte_innen", true);
+    xhttp.send();
+  }, 10000 ) ;
+
+  setInterval(function ( ) {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+        document.getElementById("feuchte_aussen").innerHTML = this.responseText;
+      }
+    };
+    xhttp.open("GET", "/feuchte_aussen", true);
+    xhttp.send();
+  }, 10000 ) ;
+
+  setInterval(function ( ) {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+        document.getElementById("druck").innerHTML = this.responseText;
+      }
+    };
+    xhttp.open("GET", "/druck", true);
+    xhttp.send();
+  }, 10000 ) ;
+</script>
+</html>
