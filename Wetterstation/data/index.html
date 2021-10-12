@@ -2,12 +2,11 @@
 <!-- 
   Code von Rui Santos übernommen und bearbeitet. Abrufbar auf https://randomnerdtutorials.com/esp8266-web-server-spiffs-nodemcu/
   Letzter Zugriff 5.10.2021.
+  Website, die die Messwerte der Wetterstation auf dem ESP8266 anzeigt. Messwerte werden jede Sekunde aktualisiert.
 -->
 <html>
 <head>
   <title>Wetterstation mit ESP8266</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" href="data:,">
   <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
@@ -39,9 +38,8 @@
   </p>
 </body>
 <!--
-Hier werden die XML-AJAX-Befehle definiert:
-AJAX kann Websites aktualiseren, ohne dass die Seite neu geladen werden muss.
-Die Kommunikation kann bidirektional sein, hier ist sie nur unidirektional.
+Hier werden die JavaScript und XML-Befehle definiert:
+Das Script kann Websites aktualiseren, ohne dass die Seite neu geladen werden muss.
 Dokumentation unter https://www.w3schools.com/xml/ajax_xmlhttprequest_response.asp und
 https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest. Zugriff 5.10.2021.
 Funktion der Anfrage:
@@ -68,7 +66,7 @@ server.on("tag", HTTP_GET, [](AsyncWebServerRequest * request) {
     };
     xhttp.open("GET", "/temperatur_aussen", true);
     xhttp.send();
-  }, 10000 ) ;
+  }, 1000 ) ;
 
   setInterval(function ( ) {
     var xhttp = new XMLHttpRequest();
@@ -79,7 +77,7 @@ server.on("tag", HTTP_GET, [](AsyncWebServerRequest * request) {
     };
     xhttp.open("GET", "/temperatur_innen", true);
     xhttp.send();
-  }, 10000 ) ;
+  }, 1000 ) ;
 
   setInterval(function ( ) {
     var xhttp = new XMLHttpRequest();
@@ -90,7 +88,7 @@ server.on("tag", HTTP_GET, [](AsyncWebServerRequest * request) {
     };
     xhttp.open("GET", "/feuchte_innen", true);
     xhttp.send();
-  }, 10000 ) ;
+  }, 1000 ) ;
 
   setInterval(function ( ) {
     var xhttp = new XMLHttpRequest();
@@ -101,7 +99,7 @@ server.on("tag", HTTP_GET, [](AsyncWebServerRequest * request) {
     };
     xhttp.open("GET", "/feuchte_aussen", true);
     xhttp.send();
-  }, 10000 ) ;
+  }, 1000 ) ;
 
   setInterval(function ( ) {
     var xhttp = new XMLHttpRequest();
@@ -112,6 +110,6 @@ server.on("tag", HTTP_GET, [](AsyncWebServerRequest * request) {
     };
     xhttp.open("GET", "/druck", true);
     xhttp.send();
-  }, 10000 ) ;
+  }, 1000 ) ;
 </script>
 </html>

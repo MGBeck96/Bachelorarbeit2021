@@ -15,18 +15,15 @@
 #include <map>
 #include <string>
 
-//#define Seehoehendruck (1013.25); // Angabe des Seehöhendrucks für Berechnung der Höhe
-
 const char* ssid = "aFRITZ!Box 7530"; // SSID des WiFi-Netzwerks
 const char* password = "77736ImBuchenfeld16"; // Passwort des WiFi-Netzwerks
 const char* mqtt_server = "broker.mqtt-dashboard.com";
 // vector aus Themen, die man Publishen oder Subscriben will. Iteration möglich durch for(const char* i : topics){...}
 std::vector<const char*> subscribe_topics = {"Temperatur_Innen", "Luftfeuchte_Innen", "Luftdruck_Innen", "Hoehe_Innen"};
 std::vector<const char*> publish_topics = {"Temperatur", "Luftfeuchte", "Luftdruck", "Hoehe"};
-std::vector<float> messwerte = {0.0, 0.0, 0.0, 0.0};
-std::map<const char*, String> value_bib;
+std::map<const char*, String> value_bib; // std::map zur Verwaltung der Messwerte.
 
-// Setup des Wifi-Clients
+// Setup des Wifi-Clients.
 WiFiClient sensorClient;
 // Setup des MQTT-Clients
 PubSubClient mqtt_client(mqtt_server, 1883, sensorClient);
@@ -37,18 +34,22 @@ AsyncWebServer server(80);
 // LC-Display an I2C-Adresse 0x27 mit 20 Zeichen auf 4 Zeilen
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 
-// Callback wird aufgerufen, wenn eine Nachricht von einem abonnierten Kanal empfangen wird.
-// Entweder im vollständigen Konstruktor angeben oder mit client.setCallback(callback).
-// Übernommen von makesmart unter: https://makesmart.net/esp8266-d1-mini-mqtt/ und angepasst
+//**********************************
+//*** Funktionen werden definiert***
+//**********************************
 
 void callback(char* topic, byte * payload, unsigned int length) {
+  // Callback wird aufgerufen, wenn eine Nachricht von einem abonnierten Kanal empfangen wird.
+  // Entweder im vollständigen Konstruktor angeben oder mit client.setCallback(callback).
+  // Übernommen von makesmart unter: https://makesmart.net/esp8266-d1-mini-mqtt/ und angepasst.
+
   Serial.println("Nachricht angekommen");
   String message = "";
   for (int i = 0; i < length; i++) {
     message += (char)payload[i];
   }
   String var = String(topic);
-  // Schaue, welches Topic ankam und speichere Nachricht in _value_bib
+  // Schaue, welches Topic ankam und speichere Nachricht in value_bib.
   for (const char* i : subscribe_topics) {
     if (var == i) {
       value_bib.at(i) = message;
@@ -57,15 +58,13 @@ void callback(char* topic, byte * payload, unsigned int length) {
 }
 
 void setup_wifi() {
-
   // Funktion, die die Verbindung mit dem Wifi herstellt.
-
   Serial.print("Verbinde zu Netzwerk: ");
   Serial.println(ssid);
-  // WiFi Verbindung mit Router
+  // WiFi Verbindung mit Router.
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
-  // Warte, bis Verbindung hergestellt und gebe so lange alle 0,5 Sekunden Punkte aus
+  // Warte, bis Verbindung hergestellt und gebe so lange alle 0,5 Sekunden Punkte aus.
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
@@ -83,8 +82,7 @@ void setup_wifi() {
 
 void mqtt_connect() {
   // Funktion, die eine Verbindung zum MQTT Broker aufbaut oder wiederaufbaut.
-
-  String str_server(mqtt_server); // Konvertiere const char* zu String für Ausgabe
+  String str_server(mqtt_server); // Konvertiere const char* zu String für Ausgabe.
   // Schleife, solange nicht verbunden
   while (!mqtt_client.connected()) {
     Serial.println("Versuche MQTT Verbindungsaufbau zu Server" + str_server + "...");
@@ -92,33 +90,32 @@ void mqtt_connect() {
     String clientId = "Wetterstation_BME280_";
     clientId += String(random(0xffff), HEX);
     // Versuch des Verbindungsaufbaus
-    if (mqtt_client.connect(clientId.c_str())) { // Konvertiere string clientID zu const char*, weil client.connect(const char*)
+    if (mqtt_client.connect(clientId.c_str())) { // Konvertiere string clientID zu const char*, weil client.connect(const char*) verlangt.
       Serial.println("connected");
       for (const char* i : subscribe_topics) {
         Serial.println(i);
         mqtt_client.subscribe(i);
-        delay(100); // Lasse genug Zeit zum Verarbeiten
+        delay(100); // Lasse genug Zeit zum Verarbeiten.
       }
-      // Nach Verbindungsaufbau eine Retained Nachricht an jedes Topic schicken
+      // Nach Verbindungsaufbau eine Retained Nachricht an jedes Topic schicken.
       for (const char* i : publish_topics) {
         Serial.println(i);
         mqtt_client.publish(i, "Erwarte Sensorwert in den nächsten 5 Sec", true); // true am Ende für Retained
-        delay(100);
+        delay(100); // Lasse genug Zeit zum Verarbeiten
       }
     } else {
       Serial.print("Verbindung zu MQTT-Server fehlgeschlagen. Grund =");
       Serial.print(mqtt_client.state());
       Serial.println("Erneuter Versuch in 5 Sekunden");
-      // Warte 5 Sekunden vor dem nächsten Verbindungsaufbau
+      // Warte 5 Sekunden vor dem nächsten Verbindungsaufbau.
       delay(5000);
     }
   }
 }
 
-
-// Platzhalter der HTML-Datei mit Werten ersetzen
-// Wird in der AsyncWebServer-Bibliothek gefordert
 String processor(const String& var) {
+  // Platzhalter der HTML-Datei mit Werten ersetzen. Wird in der AsyncWebServer-Bibliothek definiert.
+ // Funktion sorgt dafür, dass die Werte beim Aufrufen der Website sofort anzeigen werden. Wird beim Request nach der index.html-Datei benutzt.
   Serial.println(var);
   if (var == "TEMPERATUR_AUSSEN") {
     return value_bib["Temperatur"];
@@ -138,17 +135,16 @@ String processor(const String& var) {
 }
 
 void setup_server() {
-  // Route for root / web page
+  // Funktion, die den Server initalisiert.
+  // Pfad für root / web page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
-    // request->send(SPIFFS, "/index.html");
     request->send(SPIFFS, "/index.html", String(), false, processor);
   });
-  // Route to load style.css file
+  // Pfad zur style.css-Datei
   server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(SPIFFS, "/style.css", "text/css");
   });
-  // Verarbeiten der "xhttp.open("GET", "/temperatur_aussen", true);" XML/Javascript-Befehle aus der HTML-Datei
-  // 
+  // Verarbeiten der "xhttp.open("GET", "/temperatur_aussen", true);" XML/Javascript-Befehle aus der HTML-Datei.
   server.on("/temperatur_aussen", HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send_P(200, "text/plain", value_bib["Temperatur"].c_str());
   });
@@ -169,15 +165,17 @@ void setup_server() {
 }
 
 void do_publish() {
+  // Funktion, die die von der Station gemessenen Werte via MQTT publisht.
   for (const char* i : publish_topics) { // Iteration durch den Topic-Vector
     mqtt_client.publish(i, value_bib[i].c_str()); // MQTT-Publish
   }
 }
 
 void get_messwerte() {
+  // Funktion, die die Messwerte in die std::map-Bibilothek speichert.
   for (const char* i : publish_topics) {
     // Arduino-Funktion strstr(const char* s1, const char* s2) findet das erste Vorkommen des substrings s2 in s1.
-    // Falls s2 in s1 gibt die Funktion den Pointer auf den Beginn des substrings. 
+    // Falls s2 in s1 gibt die Funktion den Pointer auf den Beginn des substrings.
     // Falls s2 nicht in s1, dann gibt sie Null zurück.
     if (strstr(i, "Temperatur") != NULL) {
       value_bib.at(i) = String(bme.readTemperature());
@@ -196,6 +194,7 @@ void get_messwerte() {
 
 
 void visualisiere() {
+  // Funktion, die die Messwerte der Station auf dem IC-Display ausgibt.
   int x = 0;
   for (const char* i : publish_topics) {
     lcd.setCursor(0, x); // Schreibe an Stellen 0-11
@@ -207,13 +206,7 @@ void visualisiere() {
 }
 
 void setup() {
-  // initalisiere die Value-Bibliothek
-  for (const char* i : subscribe_topics) {
-    value_bib[i] = "0.0";
-  }
-  for (const char* i : publish_topics) {
-    value_bib[i] = "0.0";
-  }
+  // setup-Funktion, die Teil eines Arduino-Sketch ist. Wird einmalig ausgeführt.
   Serial.begin(115200); // Baud-Rate einstellen
 
   setup_wifi(); // Die WiFi-Setup Funktion aufrufen
@@ -222,7 +215,7 @@ void setup() {
     Serial.println("Fehler beim iniziieren des SPIFFS");
     return;
   }
-  // Den BME280 Sensor konfigurieren, Methode aus der Bibliothek. 0x76 ist die Adresse für den i2c Bus
+  // Den BME280 Sensor konfigurieren, Methode aus der Bibliothek. 0x76 ist die Adresse für den i2c Bus.
   while (!bme.begin(0x76)) {
     Serial.println("Sensorfehler");
     while (1);
@@ -231,13 +224,14 @@ void setup() {
   lcd.init(); //Im Setup wird der LCD gestartet
   lcd.backlight(); //Hintergrundbeleuchtung einschalten (0 schaltet die Beleuchtung aus).
 
-  mqtt_client.setCallback(callback);
+  mqtt_client.setCallback(callback); // Funktion bekannt geben, die bei einer angekommenen MQTT-Nachricht aufgerufen wird.
   mqtt_connect(); // Versuche Verbindung zum MQTT-Broker aufzubauen
-  setup_server(); // Server initialisieren
+  setup_server(); // Server initialisieren.
 }
 
 void loop() {
-  // PubSubClient-Methode, die eingehende Nachrichten und die Verbindung zum Server verwaltet
+  // loop-Funktion, die Teil eines Arduino-Sketch ist. Wird in Dauerschleife ausgeführt.
+  // PubSubClient-Methode, die eingehende Nachrichten und die Verbindung zum Server verwaltet.
   mqtt_client.loop();
   // Werte des Sensors in die std::map value_bib schreiben. Get-Methoden aus der BME280-Bibliothek.
   get_messwerte();
@@ -246,6 +240,7 @@ void loop() {
   lcd.clear();
   visualisiere();
   delay(1000);
+  // Iteriere durch die std::map value_bib und gebe ihre Werte im Serial Monitor aus.
   std::map<const char*, String>::iterator it;
   for (it = value_bib.begin(); it != value_bib.end(); ++it) {
     Serial.print(it->first);
